@@ -1,0 +1,9 @@
+1. a0-a7, a2 stores 13.
+2. 26:	45b1                	li	a1,12
+3. 3e:	274080e7          	jalr	628(ra) # 2ae <exit> (0000000000000628 <printf>)
+4. jalr这个指令会把下一个要执行的指令的地址压入ra, 及0x34+4 = 0x38
+5. HE110 World
+    57616 = 0xE110
+    0x646c72-> 0x72, 0x6c, 0x64 -> r, l, d
+    big-endian: 57616 not change, i change to 0x726c6400
+6. printf的format字符串在寄存器a0, 3在寄存器a1, 所以当试图print y的时候, 留在寄存器a2的某个随机值就会被print出来
