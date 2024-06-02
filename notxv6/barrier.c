@@ -7,11 +7,14 @@
 static int nthread = 1;
 static int round = 0;
 
+static __thread int thread_flag = 0;
+
 struct barrier {
   pthread_mutex_t barrier_mutex;
   pthread_cond_t barrier_cond;
   int nthread;      // Number of threads that have reached this round of the barrier
   int round;     // Barrier round
+  int flag;
 } bstate;
 
 static void
@@ -20,6 +23,8 @@ barrier_init(void)
   assert(pthread_mutex_init(&bstate.barrier_mutex, NULL) == 0);
   assert(pthread_cond_init(&bstate.barrier_cond, NULL) == 0);
   bstate.nthread = 0;
+  bstate.round = 0;
+  bstate.flag = 0;
 }
 
 static void 
@@ -30,6 +35,22 @@ barrier()
   // Block until all threads have called barrier() and
   // then increment bstate.round.
   //
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  thread_flag = !thread_flag;
+
+  while (thread_flag == bstate.flag) {
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+  int arrived = ++bstate.nthread;
+  if (arrived == nthread) {
+    bstate.round++;
+    bstate.flag = !bstate.flag;
+    bstate.nthread = 0;
+    pthread_cond_broadcast(&bstate.barrier_cond);
+  } else {
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+  pthread_mutex_unlock(&bstate.barrier_mutex);
   
 }
 
